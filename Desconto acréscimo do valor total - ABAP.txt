@@ -1,0 +1,54 @@
+*----------------------------------------------------------------------*
+*Cliente....: Base de teste *
+*Autor......: Lincoln de Melo Porta *
+*Projeto....: Exercício N° 6*
+*Data.......: 18/11/2021 *
+*Descrição..: Calcular o desconto ou acréscimo do valor total *
+*Programa...:  *
+*Cls Desenv.:  *
+*Transação..: ZEXERC0006 *
+*Request....:  *
+*----------------------------------------------------------------------*
+* Alteração : Desenvolvimento do sistema *
+* Autor : <autor da alteração> Lincoln de Melo Porta *
+* Data : <data da alteração> 18/11/2021 *
+* Chamado : <Número do Chamado> 0005 *
+*----------------------------------------------------------------------*
+REPORT zexerc0006.
+
+* Variável, valor final, valor do desconto ou acréscimo, valor do percentual de desconto ou acréscimo, do tipo 'pacote', com duas casas decimais.
+DATA: v_val_final TYPE p DECIMALS 2,
+      v_dec_acres TYPE p DECIMALS 2,
+      v_percentu  TYPE p DECIMALS 2.
+
+* Parâmetros, valor e quantidade, do tipo 'pacote' e 'inteiro', com duas casas decimais.
+PARAMETERS: p_valor TYPE p DECIMALS 2,
+            p_qtde  TYPE i.
+
+IF p_valor <= '100' AND p_qtde = 1.
+  v_percentu = '-15'.
+
+ELSEIF p_valor > '100' AND p_qtde = 1.
+  v_percentu = '-20'.
+
+ELSEIF p_valor <= '100' AND p_qtde <= 3.
+  v_percentu = '-5'.
+
+ELSEIF p_valor > '100' AND p_qtde <= 3.
+  v_percentu = '-10'.
+
+ELSEIF p_qtde > 3.
+  v_percentu = '10'.
+
+ENDIF.
+
+* Cálculo, (Desconto ou acréscimo) primeira operação: valor dividido por 100, segunda operação: resultado da primeira operação multiplicado pelo percentual.
+* Cálculo, (Valor final) valor somado ao valor de desconto ou acréscimo.
+v_dec_acres = ( p_valor / 100 ) * v_percentu.
+v_val_final = p_valor + v_dec_acres.
+
+WRITE:/ 'Valor original:', p_valor,
+      / 'Quantidade de parcelas:', p_qtde,
+      / 'Percentual de desconto ou acréscimo:', v_percentu,
+      / 'Valor desconto ou acréscimo:', v_dec_acres,
+      / 'Valor final', v_val_final.

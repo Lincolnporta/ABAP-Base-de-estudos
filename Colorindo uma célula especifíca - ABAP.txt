@@ -1,0 +1,120 @@
+* ----------------------------------------------------------------------
+*                           RENOV RETAIL
+* ----------------------------------------------------------------------
+* Cliente....: Base de testes.
+* Autor......: Lincoln de Melo Porta
+* Projeto....:
+* Data.......: 01/12/2021
+* Descrição..: Colorindo uma célula especifíca.
+* Programa...:
+* Cls Desenv.:
+* Transação..:
+* Request....:
+REPORT z_color_specific_cell_lp.
+
+TYPE-POOLS: slis.
+
+TYPES :
+  BEGIN OF ty_sflight.
+    INCLUDE TYPE sflight.
+
+    TYPES: color TYPE lvc_t_scol,
+  END OF ty_sflight.
+
+DATA : it_sflight TYPE TABLE OF ty_sflight,
+       wa_sflight TYPE ty_sflight.
+
+DATA: it_fieldcat TYPE slis_t_fieldcat_alv,   " catalogo de campos
+      wa_layout   TYPE slis_layout_alv.
+
+START-OF-SELECTION.
+
+  PERFORM : f_select,
+            f_trata_dados,
+            f_alv.
+
+END-OF-SELECTION.
+
+FORM f_select .
+
+  SELECT * FROM sflight
+  INTO CORRESPONDING FIELDS OF TABLE it_sflight.
+
+
+ENDFORM.
+
+
+FORM f_trata_dados .
+
+  DATA: col    TYPE lvc_s_scol,
+        coltab TYPE lvc_t_scol,
+        color1 TYPE lvc_s_colo,
+        color2 TYPE lvc_s_colo.
+
+  color1-col = '6'.
+  color1-int = '0'.
+  color1-inv = '0'.
+
+  color2-col = '4'.
+  color2-col = '0'.
+  color2-col = '0'.
+
+
+  LOOP AT it_sflight INTO wa_sflight.
+
+    IF wa_sflight-paymentsum = 0.
+      col-fname = 'PAYMENTSUM'.
+      col-color = color1.
+      APPEND col TO coltab.
+      CLEAR col.
+
+      IF wa_sflight-currency = 'EUR'.
+        col-fname = 'CURRENCY'.
+        col-color = color1.
+        APPEND col TO coltab.
+        CLEAR col.
+      ENDIF.
+      wa_sflight-color = coltab.
+    ENDIF.
+    MODIFY it_sflight FROM wa_sflight.
+  ENDLOOP.
+ENDFORM.
+
+FORM f_alv .
+  PERFORM : f_fieldcat,
+            f_layout.
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+    EXPORTING
+      i_callback_program = sy-repid
+      is_layout          = wa_layout
+      it_fieldcat        = it_fieldcat
+    TABLES
+      t_outtab           = it_sflight
+    EXCEPTIONS
+      program_error      = 1.
+
+
+ENDFORM.                    " F_ALV
+
+FORM f_fieldcat .
+
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_program_name         = sy-repid
+      i_structure_name       = 'SFLIGHT'
+    CHANGING
+      ct_fieldcat            = it_fieldcat
+    EXCEPTIONS
+      inconsistent_interface = 1
+      program_error          = 2.
+
+
+ENDFORM.
+
+FORM f_layout .
+
+  wa_layout-zebra = 'X'.
+  wa_layout-colwidth_optimize = 'X'.
+  wa_layout-coltab_fieldname = 'COLOR'.
+
+ENDFORM.

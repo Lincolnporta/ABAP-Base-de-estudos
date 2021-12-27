@@ -1,0 +1,32 @@
+*----------------------------------------------------------------------*
+*Cliente....: Base de teste *
+*Autor......: Lincoln de Melo Porta *
+*Projeto....: Exercício N°2*
+*Data.......: 18/11/2021 *
+*Descrição..: Calcular o metro quadrado *
+*Programa...:  *
+*Cls Desenv.:  *
+*Transação..: ZEXERC0002 *
+*Request....:  *
+*----------------------------------------------------------------------*
+* Alteração : Desenvolvimento do sistema *
+* Autor : <autor da alteração> Lincoln de Melo Porta *
+* Data : <data da alteração> 18/11/2021 *
+* Chamado : <Número do Chamado> 0001 *
+*----------------------------------------------------------------------*
+
+REPORT ZEXERC0002.
+
+
+* Variável do resultado, com tipo 'pacote', de duas casas decimais.
+DATA: V_RESULTADO TYPE P DECIMALS 2.
+
+* Parâmetros, com a medida N°1 e N° 2, com duas casas decimais.
+PARAMETERS: P_MED1 TYPE P DECIMALS 2,
+            P_MED2 TYPE P DECIMALS 2.
+
+* Cálculo, Multiplicação da medida N°1 pela N°2 e seu resultado.
+V_RESULTADO = P_MED1 * P_MED2.
+
+* Impressão do resultdado da multiplicação.
+WRITE:/ 'A metragem quadrada é: ', V_RESULTADO.

@@ -1,0 +1,50 @@
+*----------------------------------------------------------------------*
+*Cliente....: Base de teste *
+*Autor......: Lincoln de Melo Porta *
+*Projeto....: Exercício N° 5*
+*Data.......: 18/11/2021 *
+*Descrição..: Calcular o IMC *
+*Programa...:  *
+*Cls Desenv.:  *
+*Transação..: ZEXERC0005 *
+*Request....:  *
+*----------------------------------------------------------------------*
+* Alteração : Desenvolvimento do sistema *
+* Autor : <autor da alteração> Lincoln de Melo Porta *
+* Data : <data da alteração> 18/11/2021 *
+* Chamado : <Número do Chamado> 0004 *
+*----------------------------------------------------------------------*
+REPORT zexerc0005.
+
+* Variável, indíce de massa corporal, do tipo 'pacote', de duas casas decimais.
+DATA: v_imc TYPE p DECIMALS 2.
+
+* Parâmetros, de peso e de altura, do tipo 'pacote', de duas casas decimais.
+PARAMETERS: p_peso TYPE p DECIMALS 2,
+            p_altu TYPE p DECIMALS 2.
+
+*Cálculo, primeira operação: altura multiplicado por altura, segunda operação: peso dividido pela primeira óperação.
+v_imc = p_peso / ( p_altu * p_altu ).
+
+IF: v_imc < '17'.
+  WRITE:/ 'O IMC é:', v_imc, 'e a situação é "Muito abaixo do peso"'.
+
+ELSEIF v_imc >= '17' AND v_imc < '18.5'.
+  WRITE:/ 'O IMC é:', v_imc, 'e a situação é "Abaixo do peso"'.
+
+ELSEIF v_imc >= '18.5' AND v_imc < '25.0'.
+  WRITE:/ 'O IMC é:', v_imc, 'e a situação é "Peso normal"'.
+
+ELSEIF v_imc >='25.0' AND v_imc < '30.0'.
+  WRITE:/ 'O IMC é', v_imc, 'e a situação é "Acima do peso"'.
+
+ELSEIF v_imc >= '30.0' AND v_imc < '35.0'.
+  WRITE:/ 'O IMC é:', v_imc, 'e a situação é "Obesidade 1"'.
+
+ELSEIF v_imc >= '35.0' AND v_imc < '40.0'.
+  WRITE:/ 'O IMC é:', v_imc, 'e a situação é "Obesidade 11 (Severa)"'.
+
+ELSEIF v_imc >= '40.0'.
+  WRITE:/ 'O IMC é:', v_imc, 'e a situação é "Obesidade 111 (Mórbida)"'.
+
+ENDIF.

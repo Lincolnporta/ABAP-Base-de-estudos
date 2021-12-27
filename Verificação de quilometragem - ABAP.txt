@@ -1,0 +1,34 @@
+*----------------------------------------------------------------------*
+*Cliente....: Base de teste *
+*Autor......: Lincoln de Melo Porta *
+*Projeto....: Exercício N° 4*
+*Data.......: 18/11/2021 *
+*Descrição..: Calcular o custo de viagem *
+*Programa...:  *
+*Cls Desenv.:  *
+*Transação..: ZEXERC0004 *
+*Request....:  *
+*----------------------------------------------------------------------*
+* Alteração : Desenvolvimento do sistema *
+* Autor : <autor da alteração> Lincoln de Melo Porta *
+* Data : <data da alteração> 18/11/2021 *
+* Chamado : <Número do Chamado> 0003 *
+*----------------------------------------------------------------------*
+REPORT ZEXERC0004.
+
+* Variáveis, quantidade de litros e o valor do combustível, do tipo 'pacote', em duas casas decimais.
+DATA: V_LITRO TYPE P DECIMALS 2,
+      V_VALOR TYPE P DECIMALS 2.
+
+* Parâmetros, distância percorrida, valor do combustível e quilometragem rodada, do tipo 'pacote', em duas casas decimais.
+PARAMETERS: P_DISTA TYPE P DECIMALS 2,
+            P_VALOR TYPE P DECIMALS 2,
+            P_LTS TYPE P DECIMALS 2.
+
+* Cálculo, Para saber quantos litros serão necessários: distância dividido pela quilometragem, para saber quanto foi gasto: Litros multiplicado pelo valor.
+v_LITRO = P_DISTA / P_LTS.
+V_VALOR = V_LITRO * P_VALOR.
+
+*Impressões: Quantidade de combustível gasto e valor total gasto.
+WRITE:/ 'Quantidade de combustível gasto:', V_LITRO,
+      / 'Valor total gasto:', V_VALOR.

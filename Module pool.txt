@@ -1,0 +1,185 @@
+*-----------------------------------------------
+NOME DO OBJETO
+*-----------------------------------------------
+ZMP_ZTMP_LP 
+
+*-----------------------------------------------
+Estruturas Dictionary
+*-----------------------------------------------
+ZTMP_LP
+
+*-----------------------------------------------
+CAMPOS
+*-----------------------------------------------
+WA_ZTMP_LP
+
+*-----------------------------------------------
+MÓDULO PBO
+*-----------------------------------------------
+MODULE status_0001 OUTPUT.
+ SET PF-STATUS 'STATUS0001'.
+* SET TITLEBAR 'xxx'.
+ENDMODULE.
+
+MODULE status_0002 OUTPUT.
+ SET PF-STATUS 'STATUS0002'.
+* SET TITLEBAR 'xxx'.
+ENDMODULE.
+
+*-----------------------------------------------
+MÓDULO PAI
+*-----------------------------------------------
+MODULE user_command_0001 INPUT.
+
+  CASE sy-ucomm.
+
+    WHEN 'BACK'.
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          text_question         = 'Deseja sair do programa?'
+          text_button_1         = 'Sair'
+          text_button_2         = 'Não'
+          default_button        = '2'
+          display_cancel_button = ' '
+        IMPORTING
+          answer                = wa_ztmp_lp
+        EXCEPTIONS
+          text_not_found        = 1
+          OTHERS                = 2.
+      LEAVE TO SCREEN 0.
+      MESSAGE 'SAINDO...' TYPE 'S'.
+
+    WHEN 'ADICIONAR'.
+      MODIFY ztmp_lp FROM wa_ztmp_lp.
+      IF sy-subrc = 0.
+        MESSAGE 'RESGISTRO ADICIONADO COM SUCESSO' TYPE 'S'.
+      ENDIF.
+
+    WHEN 'DELETAR'.
+      DELETE ztmp_lp FROM wa_ztmp_lp.
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          text_question         = 'Deseja deletar este conteúdo?'
+          text_button_1         = 'Deletar'
+          text_button_2         = 'Não'
+          default_button        = '2'
+          display_cancel_button = ' '
+        IMPORTING
+          answer                = wa_ztmp_lp
+        EXCEPTIONS
+          text_not_found        = 1
+          OTHERS                = 2.
+      MESSAGE 'REGISTRO DELETADO COM SUCESSO' TYPE 'S'.
+
+    WHEN 'MODIFICAR'.
+      UPDATE ztmp_lp FROM wa_ztmp_lp.
+      IF sy-subrc = 0.
+        MESSAGE 'REGISTRO MODIFICADO COM SUCESSO' TYPE 'S'.
+      ENDIF.
+
+    WHEN 'LIMPAR'.
+      CLEAR wa_ztmp_lp.
+      MESSAGE 'TELA LIMPA COM SUCESSO' TYPE 'S'.
+
+
+    WHEN 'VOLTAR0001'.
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          text_question         = 'Deseja voltar para a página inicial?'
+          text_button_1         = 'Voltar'
+          text_button_2         = 'Não'
+          default_button        = '2'
+          display_cancel_button = ' '
+        IMPORTING
+          answer                = wa_ztmp_lp
+        EXCEPTIONS
+          text_not_found        = 1
+          OTHERS                = 2.
+      CALL SCREEN 0002.
+      MESSAGE 'VOLTANDO PARA TELA INICIAL' TYPE 'S'.
+
+  ENDCASE.
+
+ENDMODULE.
+
+
+MODULE user_command_0002 INPUT.
+
+  CASE sy-ucomm.
+
+    WHEN 'BACK'.
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          text_question         = 'Deseja sair do programa?'
+          text_button_1         = 'Sair'
+          text_button_2         = 'Não'
+          default_button        = '2'
+          display_cancel_button = ' '
+        IMPORTING
+          answer                = wa_ztmp_lp
+        EXCEPTIONS
+          text_not_found        = 1
+          OTHERS                = 2.
+      LEAVE TO SCREEN 0.
+      MESSAGE 'SAINDO...' TYPE 'S'.
+
+    WHEN 'OBTER'.
+      SELECT SINGLE * FROM ztmp_lp INTO wa_ztmp_lp
+        WHERE MATNR = wa_ztmp_lp-MATNR.
+        MESSAGE 'OBTENDO OS DADOS' TYPE 'S'.
+
+    WHEN 'NOVA'.
+      CLEAR wa_ztmp_lp.
+      MESSAGE 'NOVA PESQUISA...' TYPE 'S'.
+
+    WHEN 'EDITAR'.
+      MESSAGE 'A CAMINHO DA PRÓXIMA PÁGINA' TYPE 'S'.
+      CALL SCREEN 0001.
+
+  ENDCASE.
+
+ENDMODULE.
+
+*-----------------------------------------------
+TELAS
+*-----------------------------------------------
+0001
+PROCESS BEFORE OUTPUT.
+ MODULE STATUS_0001.
+
+PROCESS AFTER INPUT.
+ MODULE USER_COMMAND_0001.
+
+0002
+PROCESS BEFORE OUTPUT.
+ MODULE STATUS_0002.
+ MODULE START_ALV.
+
+PROCESS AFTER INPUT.
+ MODULE USER_COMMAND_0002.
+
+*-----------------------------------------------
+STATUS GUI
+*-----------------------------------------------
+STATUS0001
+STATUS0002
+
+*-----------------------------------------------
+INCLUDES
+*-----------------------------------------------
+ZMP_ZTMP_LP_F01
+
+ZMP_ZTMP_LP_I01
+-> MODULE user_command_0001 INPUT.
+-> MODULE user_command_0002 INPUT.
+
+ZMP_ZTMP_LP_O01
+-> MODULE status_0001 OUTPUT.
+-> MODULE status_0002 OUTPUT.
+
+*-----------------------------------------------
+TRANSAÇÕES
+*-----------------------------------------------
+ZMP_ZTMP_LP
+
+

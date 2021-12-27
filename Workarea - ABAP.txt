@@ -1,0 +1,155 @@
+* ----------------------------------------------------------------------
+*                           RENOV RETAIL
+* ----------------------------------------------------------------------
+* Cliente....: Base de testes.
+* Autor......: Lincoln de Melo Porta
+* Projeto....: Tabelas
+* Data.......: 19/11/2021
+* Descrição..: Desenvolvimento da Workarea que tenha o mandante, código da tabela e a denominação.
+* Programa...: ZT0001LP
+* Cls Desenv.: ZDEV
+* Transação..:
+* Request....:
+
+* Nome do programa.
+REPORT zbonus01lp.
+
+* Sempre que trabalhamos com SELECT-OPTIONS nós temos que colocar a tabela de referência na memória para ser declarada em outras localizações.
+* Tabelas trasnparentes são tabelas no banco de dados.
+TABLES: zt0002lp.
+
+
+* Tipos
+TYPES: BEGIN OF ty_zt0001lp,
+         codct TYPE zt0001lp-codct, " Código da categoria.
+         denom TYPE ze0002lp, " Campo Denominação.
+       END OF ty_zt0001lp.
+
+
+* Tabelas de dados armazenados que serão impressos.
+TYPES: BEGIN OF ty_result,
+         matnr TYPE zt0002lp-matnr, " Material.
+         denom TYPE zt0002lp-denom, " Denominação da tabela N°2.
+         denct TYPE zt0001lp-denom, " Denominação da tabela N°1.
+         codct TYPE zt0002lp-codct, " Código do material.
+         orige TYPE zt0002lp-orige, " Origem.
+         valor TYPE zt0002lp-valor, " Valor
+         waers TYPE zt0002lp-waers, " Tipo de moeda.
+       END OF ty_result.
+
+
+* Desenvolvimento da Workarea que tenha o mandante, código da tabela e a denominação.
+DATA: w_zt0002lp TYPE zt0002lp, " Work area Material.
+      w_result   TYPE ty_result. " Resultado que será impresso.
+
+* Antiga forma de aplicar a tabela, inclusive a SAP não recomenda o uso deste formato.
+* Tabelas internas, elas existem somente em tempo de execução.
+DATA: BEGIN OF t_zt0001lp OCCURS 0,
+        codct TYPE zt0001lp-codct, " Código da categoria.
+        denom TYPE ze0002lp, " Campo Denominação.
+      END OF t_zt0001lp.
+
+
+* Tabela interna.
+DATA: t_zt0002lp TYPE TABLE OF zt0002lp, " Material.
+      t_result   TYPE TABLE OF ty_result. " Tabelas que será guardado os dados.
+
+
+SELECT-OPTIONS: s_codct FOR zt0002lp-codct,
+                s_matnr FOR zt0002lp-matnr.
+
+
+* O evento START-OF-SELECTION define que é o inicio do nosso programa.
+START-OF-SELECTION.
+
+
+* O perform modularia o programa.
+  PERFORM f_select.
+
+
+* O perform que transferiu os dados para uma única tabela.
+  PERFORM f_trata_dados.
+
+
+  PERFORM f_print_alv.
+
+
+*&---------------------------------------------------------------------*
+*& Form F_SELECT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM f_select .
+
+* este select está selecionando (*) todas as informações da tabela (from) zt0002lp e colocando (into) as informações na tabela interna t_ztooo2lp.
+SELECT *  FROM zt0002lp INTO TABLE t_zt0002lp
+    WHERE codct IN s_codct " O comando de COMPARAÇÔES é o IN.
+    AND matnr IN s_matnr. " Sempre no SELECT nós utilizaremos o IN (não colocaremos o '=' ou 'EQ').
+
+ENDFORM.
+
+
+*&---------------------------------------------------------------------*
+*& Form F_TRATA_DADOS
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM f_trata_dados .
+
+  " A partir deste momento o programa entra em Loop.
+  LOOP AT t_zt0002lp INTO w_zt0002lp.
+
+    CALL FUNCTION 'ZDENOM_CTG_MATERIAL_LP'
+      EXPORTING
+        i_codct        = w_result-codct
+      IMPORTING
+        e_denom        = w_result-denct
+      EXCEPTIONS
+        nao_encontrado = 1
+        OTHERS         = 2.
+    IF sy-subrc <> 0.
+      w_result-denct = TEXT-001. " Nâo definido.
+    ENDIF.
+
+
+    " Neste momento ele irá pegar os campos da tabela que está na workarea e irá imprimir na workarea result.
+    MOVE-CORRESPONDING w_zt0002lp TO w_result.
+    APPEND w_result TO t_result.
+    CLEAR: w_result, w_zt0002lp.
+
+  ENDLOOP.
+
+ENDFORM.
+
+
+*&---------------------------------------------------------------------*
+*& Form F_PRINT_ALV
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM f_print_alv .
+
+  DATA: rl_alv TYPE REF TO cl_salv_table.
+  DATA: rl_funcoes TYPE REF TO cl_salv_functions.
+
+  CALL METHOD cl_salv_table=>factory
+    IMPORTING
+      r_salv_table = rl_alv
+    CHANGING
+      t_table      = t_result.
+
+  rl_funcoes = rl_alv->get_functions( ).
+  rl_funcoes->set_all( abap_true ).
+
+  rl_alv->display( ).
+
+ENDFORM.

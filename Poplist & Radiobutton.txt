@@ -1,0 +1,406 @@
+REPORT Z_ABC_MNO_LP.
+
+INCLUDE Z_APRE_DEC.
+INCLUDE Z_APRE_BOT.
+INCLUDE Z_APRE_IMP.
+
+INITIALIZATION.
+
+  Z_APRE_DEC=>GET_DADOS( ).
+  Z_APRE_DEC=>POP_LIST( ).
+
+AT SELECTION-SCREEN.
+
+  IF SY-UCOMM = 'CLICK1'
+    OR SY-UCOMM = 'CLICK2'
+    OR SY-UCOMM = 'CLICK3'
+    OR SY-UCOMM = 'CLICK4'.
+
+DATA(LO_Z_APRE_DEC) = NEW Z_APRE_DEC( ).
+
+LO_Z_APRE_DEC->TRATA_DADOS( ).
+LO_Z_APRE_DEC->F_ALV( ).
+
+ENDIF.
+
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM CHANGE_SCREEN.
+
+*&---------------------------------------------------------------------*
+*& Include          Z_APRE_DEC
+*&---------------------------------------------------------------------*
+CLASS z_apre_dec DEFINITION.
+
+  PUBLIC SECTION.
+
+    DATA: alv TYPE REF TO cl_salv_table.
+
+    CLASS-DATA: t_zabc      TYPE TABLE OF zabc,  	 	" Tabela ABC
+                wa_zabc     TYPE zabc,           	 	" Workearea da tabela ABC
+
+                t_zmno      TYPE TABLE OF zmno,  	 	" Tabela MNO
+                wa_zmno     TYPE zmno,		 	 	" Workarea da tabela MNO
+
+                t_zkjx      TYPE TABLE OF zkjx,  	 	" Tabela KJX
+                wa_zkjx     TYPE zkjx,		 	 	" Workarea da tabela KJX
+
+                t_zdtp      TYPE TABLE OF zdtp,  	 	" Tabela DTP
+                wa_zdtp     TYPE zdtp, 	 	 	 	" Workarea da tabela DTP
+
+                id_abc      TYPE vrm_id,         	 	" Id da tabela ABC
+                id_mno      TYPE vrm_id,	 	 	" Id da tabela MNO
+                id_kjx      TYPE vrm_id,		 	" Id da tabela KJX
+                id_dtp      TYPE vrm_id,	 	 	" Id da tabela DTP
+
+                it_valueabc TYPE vrm_values, 	 		" Tabela interna de valores da tabela ABC
+                it_valuemno TYPE vrm_values,	 	 	" Tabela interna de valores da tabela MNO
+                it_valuekjx TYPE vrm_values, 	 	 	" Tabela interna de valores da tabela KJX
+                it_valuedtp TYPE vrm_values,  	 	 	" Tabela interna de valores da tabela DTP
+
+                wa_valueabc LIKE LINE OF it_valueabc, 	 	" Workarea dos valores da tabela ABC
+                wa_valuemno LIKE LINE OF it_valuemno, 	 	" Workarea dos valores da tabela MNO
+                wa_valuekjx LIKE LINE OF it_valuekjx, 	 	" Workarea dos valores da tabela KJX
+                wa_valuedtp LIKE LINE OF it_valuedtp. 	 	" Workarea dos valores da tabela DTP
+
+    TYPES: BEGIN OF ty_zabc,					" Tipos da tabela ABC
+             inicio TYPE zabc-inicio,
+             fim    TYPE zabc-fim,
+           END OF ty_zabc.
+
+    TYPES: BEGIN OF ty_zmno,					" Tipos da tabela MNO
+             comeco  TYPE zmno-comeco,
+             termino TYPE zmno-termino,
+           END OF ty_zmno.
+
+    TYPES: BEGIN OF ty_zkjx,					" Tipos da tabela KJX
+             meio   TYPE zkjx-meio,
+             metade TYPE zkjx-metade,
+           END OF ty_zkjx.
+
+    TYPES: BEGIN OF ty_zdtp,					" Tipos da tabela DTP
+             partir    TYPE zdtp-partir,
+             encontrar TYPE zdtp-encontrar,
+           END OF ty_zdtp.
+
+    DATA: it_ty_zabc TYPE TABLE OF ty_zabc,			" Variáveis da tabela ABC
+          wa_ty_zabc TYPE ty_zabc,				" Workarea da variável da tabela ABC
+
+          it_ty_zmno TYPE TABLE OF ty_zmno,			" Variáveis da tabela MNO
+          wa_ty_zmno TYPE ty_zmno,				" Workarea da variável da tabela MNO
+
+          IT_TY_ZKJX TYPE TABLE OF TY_ZKJX,			" Variáveis da tabela KJX
+          WA_TY_ZKJX TYPE TY_ZKJX,				" Workarea da variável da tabela KJX
+
+          IT_TY_ZDTP TYPE TABLE OF TY_ZDTP,			" Variáveis da tabela DTP
+          WA_TY_ZDTP TYPE TY_ZDTP.				" Workarea da variável da tabela DTP
+
+    CLASS-METHODS: pop_list,
+      		   get_dados.
+
+    METHODS: trata_dados,
+	     f_alv.
+
+ENDCLASS.
+
+*&---------------------------------------------------------------------*
+*& Include          Z_APRE_BOT
+*&---------------------------------------------------------------------*
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME.
+
+PARAMETERS: rb_abc RADIOBUTTON GROUP g1 USER-COMMAND change_screen DEFAULT 'X',
+            rb_mno RADIOBUTTON GROUP g1,
+            rb_kjx RADIOBUTTON GROUP g1,
+            rb_dtp RADIOBUTTON GROUP g1.
+
+SELECTION-SCREEN END OF BLOCK b1.
+SELECTION-SCREEN SKIP.
+
+PARAMETERS: p_abc AS LISTBOX VISIBLE LENGTH 20 TYPE char20 USER-COMMAND click1 MODIF ID 1.
+
+"SELECTION-SCREEN BEGIN OF BLOCK B2 WITH FRAME.
+
+PARAMETERS: p_mno AS LISTBOX VISIBLE LENGTH 20 TYPE char20 USER-COMMAND click2 MODIF ID 2.
+
+PARAMETERS: p_kjx AS LISTBOX VISIBLE LENGTH 20 TYPE char20 USER-COMMAND click3 MODIF ID 3.
+
+PARAMETERS: P_DTP AS LISTBOX VISIBLE LENGTH 20 TYPE CHAR20 USER-COMMAND CLICK4 MODIF ID 4.
+
+"SELECTION-SCREEN END OF BLOCK B2.
+
+*&---------------------------------------------------------------------*
+*& Include          Z_APRE_IMP
+*&---------------------------------------------------------------------*
+CLASS z_apre_dec IMPLEMENTATION.
+
+  METHOD get_dados.
+
+    SELECT * FROM zabc INTO TABLE t_zabc.
+
+    SELECT * FROM zmno INTO TABLE t_zmno.
+
+    SELECT * FROM zkjx INTO TABLE t_zkjx.
+
+    SELECT * FROM zdtp INTO TABLE t_zdtp.
+
+  ENDMETHOD.
+
+  METHOD pop_list.
+
+    CLEAR wa_valueabc.
+    LOOP AT t_zabc INTO wa_zabc.
+      wa_valueabc-key = wa_zabc-inicio.
+      wa_valueabc-text = wa_zabc-inicio.
+      APPEND wa_valueabc TO it_valueabc.
+    ENDLOOP.
+
+    id_abc = 'P_ABC'.
+
+    CALL FUNCTION 'VRM_SET_VALUES'
+      EXPORTING
+        id     = id_abc
+        values = it_valueabc.
+
+    IF sy-subrc <> 0.
+    ENDIF.
+
+    CLEAR wa_valuemno.
+    LOOP AT t_zmno INTO wa_zmno.
+      wa_valuemno-key = wa_zmno-comeco.
+      wa_valuemno-text = wa_zmno-comeco.
+      APPEND wa_valuemno TO it_valuemno.
+    ENDLOOP.
+
+    id_mno = 'P_MNO'.
+
+    CALL FUNCTION 'VRM_SET_VALUES'
+      EXPORTING
+        id     = id_mno
+        values = it_valuemno.
+
+    IF sy-subrc <> 0.
+    ENDIF.
+
+    CLEAR wa_valuekjx.
+    LOOP AT t_zkjx INTO wa_zkjx.
+      wa_valuekjx-key = wa_zkjx-meio.
+      wa_valuekjx-text = wa_zkjx-meio.
+      APPEND wa_valuekjx TO it_valuekjx.
+    ENDLOOP.
+
+    id_kjx = 'P_KJX'.
+
+    CALL FUNCTION 'VRM_SET_VALUES'
+      EXPORTING
+        id     = id_kjx
+        values = it_valuekjx.
+
+    IF sy-subrc <> 0.
+    ENDIF.
+
+    CLEAR wa_valuedtp.
+    LOOP AT t_zdtp INTO wa_zdtp.
+      wa_valuedtp-key = wa_zdtp-partir.
+      wa_valuedtp-text = wa_zdtp-partir.
+      APPEND wa_valuedtp TO it_valuedtp.
+    ENDLOOP.
+
+    id_dtp = 'P_DTP'.
+
+    CALL FUNCTION 'VRM_SET_VALUES'
+      EXPORTING
+        id     = id_dtp
+        values = it_valuedtp.
+
+    IF sy-subrc <> 0.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD trata_dados.
+
+    LOOP AT t_zabc INTO wa_zabc WHERE inicio = p_abc.
+      MOVE wa_zabc-inicio TO wa_ty_zabc-inicio.
+      MOVE wa_zabc-fim TO wa_ty_zabc-fim.
+      APPEND wa_ty_zabc TO  it_ty_zabc.
+    ENDLOOP.
+
+    LOOP AT t_zmno INTO wa_zmno WHERE comeco = p_mno.
+      MOVE wa_zmno-comeco TO wa_ty_zmno-comeco.
+      MOVE wa_zmno-termino TO wa_ty_zmno-termino.
+      APPEND wa_ty_zmno TO it_ty_zmno.
+    ENDLOOP.
+
+    LOOP AT t_zkjx INTO wa_zkjx WHERE meio = p_kjx.
+      MOVE wa_zkjx-meio TO wa_ty_zkjx-meio.
+      MOVE wa_zkjx-metade TO wa_ty_zkjx-metade.
+      APPEND wa_ty_zkjx TO it_ty_zkjx.
+    ENDLOOP.
+
+    LOOP AT t_zdtp INTO wa_zdtp WHERE partir = p_dtp.
+      MOVE wa_zdtp-partir TO wa_ty_zdtp-partir.
+      MOVE wa_zdtp-encontrar TO wa_ty_zdtp-encontrar.
+      APPEND wa_ty_zdtp TO it_ty_zdtp.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD f_alv.
+
+    IF rb_abc = 'X'.
+      TRY.
+          CALL METHOD cl_salv_table=>factory
+            IMPORTING
+              r_salv_table = alv
+            CHANGING
+              t_table      = it_ty_zabc.
+        CATCH cx_salv_msg.
+      ENDTRY.
+      alv->display( ).
+    ENDIF.
+
+    IF rb_mno = 'X'.
+      TRY.
+          CALL METHOD cl_salv_table=>factory
+            IMPORTING
+              r_salv_table = alv
+            CHANGING
+              t_table      = it_ty_zmno.
+        CATCH cx_salv_msg.
+      ENDTRY.
+      alv->display( ).
+    ENDIF.
+
+    IF rb_kjx = 'X'.
+      TRY.
+          CALL METHOD cl_salv_table=>factory
+            IMPORTING
+              r_salv_table = alv
+            CHANGING
+              t_table      = it_ty_zkjx.
+        CATCH cx_salv_msg.
+      ENDTRY.
+      alv->display( ).
+    ENDIF.
+
+    IF rb_dtp = 'X'.
+      TRY.
+          CALL METHOD cl_salv_table=>factory
+            IMPORTING
+              r_salv_table = alv
+            CHANGING
+              t_table      = it_ty_zdtp.
+        CATCH cx_salv_msg.
+      ENDTRY.
+      alv->display( ).
+    ENDIF.
+
+  ENDMETHOD.
+ENDCLASS.
+
+FORM change_screen.
+
+  LOOP AT SCREEN.
+
+    IF rb_abc = 'X'.
+      IF screen-group1 = '1'.
+        screen-invisible = 0.
+        screen-input = 1.
+        screen-active = 1.
+      ENDIF.
+
+      IF screen-group1 = '2'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+      IF screen-group1 = '3'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+      IF screen-group1 = '4'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+    ELSEIF rb_mno = 'X'.
+      IF screen-group1 = '1'.
+        screen-invisible = 1.
+        screen-input = 0.
+        screen-active = 0.
+      ENDIF.
+
+      IF screen-group1 = '2'.
+        screen-invisible = 0.
+        screen-input = 1.
+        screen-active = 1.
+      ENDIF.
+
+      IF screen-group1 = '3'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+      IF screen-group1 = '4'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+    ELSEIF rb_kjx = 'X'.
+      IF screen-group1 = '3'.
+        screen-invisible = 0.
+        screen-input = 1.
+        screen-active = 1.
+      ENDIF.
+
+      IF screen-group1 = '1'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+      IF screen-group1 = '2'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+      IF screen-group1 = '4'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+    ELSEIF rb_dtp = 'X'.
+      IF screen-group1 = '4'.
+        screen-invisible = 0.
+        screen-input = 1.
+        screen-active = 1.
+      ENDIF.
+
+      IF screen-group1 = '1'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+      IF screen-group1 = '2'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+
+      IF screen-group1 = '3'.
+        screen-invisible = '1'.
+        screen-input = '0'.
+        screen-active = '0'.
+      ENDIF.
+    ENDIF.
+    MODIFY SCREEN.
+  ENDLOOP.
+ENDFORM.

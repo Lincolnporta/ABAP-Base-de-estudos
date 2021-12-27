@@ -1,0 +1,30 @@
+*&---------------------------------------------------------------------*
+*& Report ZCALCULADORA_LP
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZCALCULADORA_LP.
+
+DATA: V_RESUL TYPE I.
+
+PARAMETERS: P_NUM1 TYPE I,
+            P_NUM2 TYPE I,
+            P_SOM RADIOBUTTON GROUP GR1,
+            P_SUB RADIOBUTTON GROUP GR1,
+            P_MUT RADIOBUTTON GROUP GR1,
+            P_DIV RADIOBUTTON GROUP GR1.
+
+        IF P_SOM = 'X'.
+           V_RESUL = P_NUM1 + P_NUM2.
+
+        ELSEIF P_SUB = 'X'.
+               V_RESUL = P_NUM1 - P_NUM2.
+
+        ELSEIF P_MUT = 'X'.
+               V_RESUL = P_NUM1 * P_NUM2.
+
+        ELSEIF P_DIV = 'X'.
+               V_RESUL = P_NUM1 / P_NUM2.
+        ENDIF.
+
+WRITE: 'RESULTADO', V_RESUL.

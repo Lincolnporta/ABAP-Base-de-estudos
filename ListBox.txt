@@ -1,0 +1,39 @@
+* ----------------------------------------------------------------------
+*                           RENOV RETAIL
+* ----------------------------------------------------------------------
+* Cliente....: Base de testes.
+* Autor......: Lincoln de Melo Porta
+* Projeto....:
+* Data.......: 02/06/2021
+* Descrição..: Gerar Código do Material Antigo
+* Programa...: ZMMI139
+* Cls Desenv.: ZDEV
+* Transação..: ZMMI139
+* Request....: MFDK945225
+* ----------------------------------------------------------------------
+REPORT: Teste.
+
+TYPE-POOLS : vrm.
+
+PARAMETERS p_TEST(3) AS LISTBOX VISIBLE LENGTH 5 DEFAULT 'YES'.
+
+DATA: g_name TYPE vrm_id,
+      g_list  TYPE vrm_values,
+      g_value LIKE LINE OF g_list.
+
+AT SELECTION-SCREEN OUTPUT.
+Finance
+  CLEAR: g_value, g_list.
+  g_value-key = 'YES'.
+  g_value-text = 'YES'.
+  APPEND g_value TO g_list.
+
+  g_value-key = 'NO'.
+  g_value-text = 'NO'.
+  APPEND g_value TO g_list.
+
+
+    CALL FUNCTION 'VRM_SET_VALUES'
+      EXPORTING
+        id     = 'P_TEST'
+        values = g_list.

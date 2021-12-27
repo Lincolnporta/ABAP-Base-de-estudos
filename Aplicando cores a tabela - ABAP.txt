@@ -1,0 +1,117 @@
+REPORT zcolors.
+
+TYPES: BEGIN OF ty_colors,
+         campo1(4) TYPE c,
+         campo2(6) TYPE p DECIMALS 3,
+         cores(4)  TYPE c,
+       END OF ty_colors.
+
+TYPE-POOLS: slis.
+
+DATA: it_colors   TYPE TABLE OF ty_colors,
+      wa_colors   TYPE ty_colors,
+      it_fieldcat TYPE TABLE OF slis_fieldcat_alv,
+      wa_fieldcat TYPE slis_fieldcat_alv,
+      wa_layout   TYPE slis_layout_alv.
+
+PERFORM: f_select_data,
+         f_fieldcat,
+         f_layout,
+         f_view.
+
+FORM f_select_data.
+  wa_colors-campo1 = '1'.
+  wa_colors-campo2 = '16'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '2'.
+  wa_colors-campo2 = '-73'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '3'.
+  wa_colors-campo2 = '20'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '4'.
+  wa_colors-campo2 = '50'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '5'.
+  wa_colors-campo2 = '-55'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '6'.
+  wa_colors-campo2 = '90'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '7'.
+  wa_colors-campo2 = '100'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo2 = '8'.
+  wa_colors-campo2 = '90'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '9'.
+  wa_colors-campo2 = '100'.
+  APPEND wa_colors TO it_colors.
+
+  wa_colors-campo1 = '10'.
+  wa_colors-campo2 = '20'.
+  APPEND wa_colors TO it_colors.
+
+  LOOP AT it_colors INTO wa_colors.
+
+    IF wa_colors-campo2 < 0.
+      wa_colors-cores = 'C610'.
+    ELSEIF wa_colors-campo2 > 0 AND wa_colors-campo2 < 50.
+      wa_colors-cores = 'c310'.
+    ELSEIF wa_colors-campo2 >= 50.
+      wa_colors-cores = 'C510'.
+    ENDIF.
+
+    MODIFY it_colors FROM wa_colors INDEX sy-tabix.
+
+  ENDLOOP.
+ENDFORM.
+
+FORM F_fieldcat.
+  CLEAR wa_fieldcat.
+  wa_fieldcat-fieldname = 'CAMPO1'.
+  wa_fieldcat-seltext_m = 'CAMPO1'.
+  wa_fieldcat-tabname = 'IT_COLORS'.
+  APPEND wa_fieldcat TO it_fieldcat.
+
+  CLEAR wa_fieldcat.
+  wa_fieldcat-fieldname = 'CAMPO2'.
+  wa_fieldcat-seltext_m = 'CAMPO2'.
+  wa_fieldcat-tabname = 'IT_COLORS'.
+  APPEND wa_fieldcat TO it_fieldcat.
+ENDFORM.
+
+FORM f_LAYOUT.
+  WA_LAYOUT-EXPAND_ALL = 'X'.
+  WA_LAYOUT-COLWIDTH_OPTIMIZE = 'X'.
+  WA_LAYOUT-ZEBRA = 'X'.
+  WA_LAYOUT-INFO_FIELDNAME = 'CORES'.
+  ENDFORM.
+
+FORM f_VIEW.
+  DATA: LV_REPID TYPE SY-REPID.
+        lv_REPID = SY-REPID.
+
+        CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+        EXPORTING
+          I_CALLBACK_PROGRAM = LV_REPID
+          IS_LAYOUT = WA_LAYOUT
+          IT_FIELDCAT = IT_FIELDCAT
+        TABLES
+          T_OUTTAB = IT_COLORS
+        EXCEPTIONS
+          PROGRAM_ERROR = 1
+        OTHERS = 2.
+
+        IF SY-SUBRC <> 0.
+          LEAVE LIST-PROCESSING.
+        ENDIF.
+        ENDFORM.
