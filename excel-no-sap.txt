@@ -1,0 +1,373 @@
+REPORT Z_EXCEL_LMP.
+
+TYPE-POOLS: OLE2.
+
+TABLES : T005T.                                                                 ">>>> TABELA T005T.
+
+DATA : LT_T005T TYPE TABLE OF T005T.                                            ">>>> TABELA INTERNA DA T005T
+
+DATA : LS_T005T TYPE T005T.                                                     ">>>> WORKAREA DA T055T
+
+DATA : LINHA   TYPE I,                                                          ">>>> Atribui Valor Linha
+       COLUNA  TYPE I,
+       V_TEXTO TYPE STRING.                                                     ">>>> Conteudo das celulas
+
+DATA: GS_EXCEL        TYPE OLE2_OBJECT,                                         ">>>> OBJETO DO EXCEL
+      GS_WORKBOOK     TYPE OLE2_OBJECT,                                         ">>>>WORBOOK DA AREA DE TRABALHO (EXCEL)
+      GS_SHEET        TYPE OLE2_OBJECT,                                         ">>>> PLANILHA (EXCEL)
+      GS_CELL1        TYPE OLE2_OBJECT,                                         ">>>> CELULA 1  (EXCEL)
+      GS_CELL2        TYPE OLE2_OBJECT,                                         ">>>> CELULA 2  (EXCEL)
+      GS_CELLS        TYPE OLE2_OBJECT,
+      GS_RANGE        TYPE OLE2_OBJECT,                                         ">>>> GRUPO DE CELULAS (EXCEL)
+      GS_FONT         TYPE OLE2_OBJECT,                                         ">>>> CELULA DA FONTE  (EXCEL)
+      GS_COLUMN       TYPE OLE2_OBJECT.                                         ">>>> CELULA DA COLUNA (EXCEL)
+
+
+SELECTION-SCREEN BEGIN OF BLOCK B1.
+PARAMETERS:
+  P_SPRAS TYPE T005T-SPRAS OBLIGATORY.                                          ">>>> PARAMETER DO PAIS.
+
+SELECTION-SCREEN END OF BLOCK   B1.
+
+SELECTION-SCREEN BEGIN OF BLOCK B2.
+
+SELECT-OPTIONS:
+  S_LAND1 FOR T005T-LAND1.                                                      ">>>> RANGE DO CAMPO IDIOMA.
+
+SELECTION-SCREEN END OF BLOCK   B2.
+
+SELECTION-SCREEN BEGIN OF BLOCK B3.
+
+SELECT-OPTIONS:
+  S_LANDX FOR T005T-LANDX.                                                      ">>>> RANGE DO CAMPO DENOMINAÇAO.
+
+SELECTION-SCREEN END OF BLOCK   B3.
+
+SELECTION-SCREEN BEGIN OF BLOCK B4.
+
+PARAMETERS: P_PLAN TYPE CHAR30 OBLIGATORY.
+
+SELECTION-SCREEN END OF BLOCK B4.
+
+SELECTION-SCREEN BEGIN OF BLOCK B5.
+
+PARAMETERS: P_TITULO TYPE CHAR30 OBLIGATORY.
+
+SELECTION-SCREEN END OF BLOCK   B5.
+
+
+START-OF-SELECTION.
+
+  PERFORM SELECTS.
+
+  IF LT_T005T IS NOT INITIAL.
+
+    PERFORM F_GERA_EXCEL.
+
+    PERFORM FORMATA_COLUNAS.
+
+    PERFORM GERA_CABECALHO.
+
+    PERFORM GERA_LINHAS.
+
+    PERFORM ENCERRA_PLANILHA_EXCEL.
+
+  ELSE.
+
+    MESSAGE 'Não foi encontrado dados na tabela conforme critérios da tela de seleção'
+      TYPE 'I'.
+
+  ENDIF.
+
+END-OF-SELECTION.
+
+
+*&---------------------------------------------------------------------*
+*&      Form  F_GERA_EXCEL
+*&---------------------------------------------------------------------*
+FORM F_GERA_EXCEL .
+
+  CREATE OBJECT GS_EXCEL 'Excel.Application'.
+
+  SET PROPERTY OF GS_EXCEL 'ScreenUpdating'   = 0.
+
+  SET PROPERTY OF GS_EXCEL 'Visible'   = 1.
+
+  GET PROPERTY OF GS_EXCEL 'Workbooks' = GS_WORKBOOK.
+
+  CALL METHOD OF GS_WORKBOOK 'Add'.
+
+  PERFORM ERR_HDL.
+
+  CALL METHOD OF GS_EXCEL 'Worksheets' = GS_SHEET.
+  PERFORM ERR_HDL.
+
+  CALL METHOD OF GS_SHEET 'Add' = GS_SHEET.
+  PERFORM ERR_HDL.
+
+  SET PROPERTY OF GS_SHEET 'Name' = P_PLAN.
+
+  PERFORM ERR_HDL.
+
+
+ENDFORM.                    " F_GERA_EXCEL
+*&---------------------------------------------------------------------*
+*&      Form  ERR_HDL
+*&---------------------------------------------------------------------*
+FORM ERR_HDL .
+
+
+  IF SY-SUBRC <> 0.
+    " Erro ....
+    WRITE: / 'Erro na abertura OLE-Automation(EXCEL):', SY-SUBRC.
+
+    STOP.
+  ENDIF.
+
+ENDFORM.                    " ERR_HDL
+
+*&---------------------------------------------------------------------*
+*&      Form  FORMATA_COLUNAS
+*&---------------------------------------------------------------------*
+FORM FORMATA_COLUNAS .
+
+  PERFORM FORMATA_LARGURA USING 'A:F' '35'.
+
+ENDFORM.                    " FORMATA_COLUNAS
+
+*&---------------------------------------------------------------------*
+*&      Form  FORMATA_LARGURA
+*&---------------------------------------------------------------------*
+FORM FORMATA_LARGURA  USING  COLUNA
+                             LARGURA.
+
+  CALL METHOD OF GS_EXCEL 'Range' = GS_RANGE
+    EXPORTING
+
+  SET PROPERTY OF GS_RANGE 'ColumnWidth' =  LARGURA.
+
+ENDFORM.                    " FORMATA_LARGURA
+
+*&---------------------------------------------------------------------*
+*&      Form  GERA_CABECALHO
+*&---------------------------------------------------------------------*
+FORM GERA_CABECALHO .
+*&---------------------------------------------------------------------*
+  LINHA = LINHA + 1.
+
+  V_TEXTO = P_TITULO.
+  PERFORM PREENCHE_TITULO USING LINHA 1 LINHA 6  V_TEXTO.
+
+*&---------------------------------------------------------------------*
+  LINHA = LINHA + 2.
+
+  CONCATENATE : 'Dados do idioma:' P_SPRAS
+    INTO V_TEXTO SEPARATED BY SPACE.
+  PERFORM PREENCHE_TITULO USING LINHA 1 LINHA 6  V_TEXTO.
+
+
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+  LINHA  = LINHA  + 2.
+
+  COLUNA = COLUNA + 1.
+  V_TEXTO = 'IDIOMA'.
+  PERFORM PREENCHE_TITULO USING LINHA COLUNA LINHA COLUNA  V_TEXTO.
+
+  COLUNA = COLUNA + 1.
+  V_TEXTO = 'PAIS'.
+  PERFORM PREENCHE_TITULO USING LINHA COLUNA LINHA COLUNA  V_TEXTO.
+
+  COLUNA = COLUNA + 1.
+  V_TEXTO = 'DENOMINAÇAO'.
+  PERFORM PREENCHE_TITULO USING LINHA COLUNA LINHA COLUNA  V_TEXTO.
+
+  COLUNA = COLUNA + 1.
+  V_TEXTO = 'NACIONALIDADE'.
+  PERFORM PREENCHE_TITULO USING LINHA COLUNA LINHA COLUNA  V_TEXTO.
+
+  COLUNA = COLUNA + 1.
+  V_TEXTO = 'DESCRIÇAO DENOMINAÇAO'.
+  PERFORM PREENCHE_TITULO USING LINHA COLUNA LINHA COLUNA  V_TEXTO.
+
+  COLUNA = COLUNA + 1.
+  V_TEXTO = 'DESCRIÇAO NACIONALIDADE'.
+  PERFORM PREENCHE_TITULO USING LINHA COLUNA LINHA COLUNA  V_TEXTO.
+
+ENDFORM.                    " GERA_CABECALHO
+
+*&---------------------------------------------------------------------*
+*&      Form  PREENCHE_TITULO
+*&---------------------------------------------------------------------*
+FORM PREENCHE_TITULO  USING LINHA1
+                            COLUNA1
+                            LINHA2
+                            COLUNA2
+                            TEXTO.
+
+  PERFORM SELECIONA_CELULA USING LINHA1 COLUNA1 GS_CELL1.
+
+  PERFORM SELECIONA_CELULA USING LINHA2 COLUNA2 GS_CELL2.
+
+  PERFORM MESCLA_CELULAS.
+
+  PERFORM CRIA_BORDA USING GS_CELL1
+                           GS_CELL2
+GS_CELLS.
+
+  PERFORM PREENCHE_CELULA USING GS_CELL1 1 3 0 15 TEXTO.
+
+
+ENDFORM.                    " PREENCHE_TITULO
+
+*&---------------------------------------------------------------------*
+*&      Form  SELECIONA_CELULA
+*&---------------------------------------------------------------------*
+FORM SELECIONA_CELULA  USING    LINHA
+                                COLUNA
+                      
+  CALL METHOD OF GS_EXCEL 'Cells' = CELULA
+    EXPORTING
+    #1 = LINHA
+    #2 = COLUNA.
+
+ENDFORM.                    " SELECIONA_CELULA
+
+*&---------------------------------------------------------------------*
+*&      Form  MESCLA_CELULAS
+*&---------------------------------------------------------------------*
+FORM MESCLA_CELULAS .
+
+  CALL METHOD OF GS_EXCEL 'Range' = GS_CELLS
+    EXPORTING
+    #1 = GS_CELL1
+    #2 = GS_CELL2.
+
+  CALL METHOD OF GS_CELLS 'Merge' = GS_CELLS.
+
+ENDFORM.                    " MESCLA_CELULAS
+*&---------------------------------------------------------------------*
+*&      Form  CRIA_BORDA
+*&---------------------------------------------------------------------*
+FORM CRIA_BORDA  USING    CELULA1
+                          CELULA2
+                          CELULA.
+
+  CALL METHOD OF GS_EXCEL 'Range' = CELULA
+    EXPORTING
+    #1 = CELULA1
+    #2 = CELULA2.
+
+  CALL METHOD OF CELULA 'BorderAround'
+    EXPORTING
+    #1 = 1
+    #2 = 2.
+
+
+ENDFORM.                    " CRIA_BORDA
+
+*&---------------------------------------------------------------------*
+*&      Form  PREENCHE_CELULA
+*&---------------------------------------------------------------------*
+FORM PREENCHE_CELULA  USING CELULA
+                            BOLD
+                            ALINHAMENTO
+                            LARGURA
+                            TAM
+                            VALOR.
+
+  GET PROPERTY OF celula  'Font' = gs_font.
+  SET PROPERTY OF gs_font 'Bold' = bold.
+  SET PROPERTY OF gs_font 'Size' = tam.
+  SET PROPERTY OF celula  'HorizontalAlignment' = alinhamento.
+  SET PROPERTY OF celula  'NumberFormat' = '@'. "'@'.
+
+  SET PROPERTY OF celula  'Value' = valor.
+
+
+
+ENDFORM.                    " PREENCHE_CELULA
+
+*&---------------------------------------------------------------------*
+*&      Form  SELECTS
+*&---------------------------------------------------------------------*
+FORM SELECTS .
+
+  SELECT *
+    FROM T005T
+    INTO TABLE LT_T005T
+    WHERE SPRAS =  P_SPRAS
+      AND LAND1 IN S_LAND1
+      AND LANDX IN S_LANDX.
+
+ENDFORM.                    " SELECTS
+
+*&---------------------------------------------------------------------*
+*&      Form  MONTA_LINHAS
+*&---------------------------------------------------------------------*
+FORM MONTA_LINHAS .
+
+  PERFORM PREENCHE_DETALHE USING LINHA 1 0 0 12 3 LS_T005T-SPRAS.
+
+  PERFORM PREENCHE_DETALHE USING LINHA 2 0 0 12 3 LS_T005T-LAND1.
+
+  PERFORM PREENCHE_DETALHE USING LINHA 3 0 0 12 3 LS_T005T-LANDX.
+
+  PERFORM PREENCHE_DETALHE USING LINHA 4 0 0 12 3 LS_T005T-NATIO.
+
+  PERFORM PREENCHE_DETALHE USING LINHA 5 0 0 12 3 LS_T005T-LANDX50.
+
+  PERFORM PREENCHE_DETALHE USING LINHA 6 0 0 12 3 LS_T005T-NATIO50.
+
+ENDFORM.                    " MONTA_LINHAS
+
+*&---------------------------------------------------------------------*
+*&      Form  PREENCHE_DETALHE
+*&---------------------------------------------------------------------*
+FORM PREENCHE_DETALHE      USING LINHA
+                                 COLUNA
+                                 BOLD
+                                 LARGURA
+                                 TAM
+                                 ALINHAMENTO
+                                 CONTEUDO.
+
+  PERFORM SELECIONA_CELULA USING LINHA
+                                 COLUNA
+                                 GS_CELL1.
+
+  PERFORM PREENCHE_CELULA  USING GS_CELL1
+                                 BOLD
+                                 ALINHAMENTO
+                                 LARGURA
+                                 TAM
+                                 CONTEUDO.
+
+ENDFORM.                    " PREENCHE_DETALHE
+
+*&---------------------------------------------------------------------*
+*&      Form  GERA_LINHAS
+*&---------------------------------------------------------------------*
+FORM GERA_LINHAS .
+
+  LOOP AT LT_T005T INTO LS_T005T.
+
+    LINHA = LINHA + 1.
+    PERFORM MONTA_LINHAS.
+
+  ENDLOOP.
+
+ENDFORM.                    " GERA_LINHAS
+
+*&---------------------------------------------------------------------*
+*&      Form  ENCERRA_PLANILHA_EXCEL
+*&---------------------------------------------------------------------*
+FORM ENCERRA_PLANILHA_EXCEL .
+
+  SET PROPERTY OF GS_EXCEL 'ScreenUpdating'   = 1.
+  FREE OBJECT GS_SHEET.
+  FREE OBJECT GS_WORKBOOK.
+  FREE OBJECT GS_EXCEL.
+
+
+ENDFORM.                    " ENCERRA_PLANILHA_EXCEL
